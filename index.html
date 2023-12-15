@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Leitor de Arquivos</title>
+
+    <link rel="stylesheet" href="./css/global.css" />
+    <link rel="stylesheet" href="./css/header.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.1/pdf.min.js"></script>
+  </head>
+  <body>
+    <header class="header">
+      <div class="logo">
+        <h3>ls-readheremanga</h3>
+      </div>
+      <nav class="menu">
+        <ul>
+          <li><a href="#">Home</a></li>
+          <li><a href="#">Serviços</a></li>
+          <li><a href="#">Sobre</a></li>
+          <li><a href="#">Contato</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <div>
+        <input type="file" id="pdf-file" accept=".pdf" />
+        <button id="load-pdf">Abrir PDF</button>
+        <button id="close-pdf">Fechar PDF</button>
+  <div id="pdf-container"></div>
+      </div>
+
+      <div>
+        <input type="file" id="fileInput" />
+        <button onclick="lerArquivo()">Ler Arquivo</button>
+        <pre id="fileContents"></pre>
+      </div>
+    </main>
+    <footer></footer>
+
+    <script>
+      function lerArquivo() {
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            const contents = event.target.result;
+            exibirConteudo(contents);
+          };
+          reader.readAsText(file);
+        } else {
+          alert("Por favor, selecione um arquivo.");
+        }
+      }
+
+      function exibirConteudo(contents) {
+        const fileContents = document.getElementById("fileContents");
+        fileContents.textContent = contents;
+      }
+    </script>
+    <script>
+        const pdfFileInput = document.getElementById('pdf-file');
+        const pdfContainer = document.getElementById('pdf-container');
+        const loadPdfButton = document.getElementById('load-pdf');
+        const closePdfButton = document.getElementById('close-pdf');
+        let objectUrl = null;
+    
+        loadPdfButton.addEventListener('click', async function() {
+          const file = pdfFileInput.files[0];
+    
+          if (file) {
+            const fileReader = new FileReader();
+    
+            fileReader.onload = async function() {
+              const typedarray = new Uint8Array(this.result);
+              const blob = new Blob([typedarray], { type: 'application/pdf' });
+    
+              objectUrl = URL.createObjectURL(blob);
+              const iframe = document.createElement('iframe');
+              iframe.style.width = '100%';
+              iframe.style.height = '500px'; // Defina a altura conforme necessário
+    
+              pdfContainer.innerHTML = ''; // Limpa qualquer conteúdo anterior
+              pdfContainer.appendChild(iframe);
+    
+              iframe.src = objectUrl;
+            };
+    
+            fileReader.readAsArrayBuffer(file);
+          }
+        });
+    
+        closePdfButton.addEventListener('click', function() {
+          if (objectUrl) {
+            URL.revokeObjectURL(objectUrl);
+            pdfContainer.innerHTML = ''; // Remove o iframe
+          }
+        });
+      </script>
+  </body>
+</html>
