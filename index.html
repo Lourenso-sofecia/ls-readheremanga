@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="./css/header.css" />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.1/pdf.min.js"></script>
+    
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
   </head>
   <body>
     <header class="header">
@@ -25,44 +27,83 @@
     </header>
     <main>
       <div>
-        <input type="file" id="pdf-file" accept=".pdf" />
-        <button id="load-pdf">Abrir PDF</button>
-        <button id="close-pdf">Fechar PDF</button>
-  <div id="pdf-container"></div>
-      </div>
+        <input type="file" id="file-input" accept=".pdf, .cbz">
+        <button id="load-file">Abrir Manga</button>
+        <button id="close-file">Fechar Manga</button>
+        <div id="file-container"></div>
+      
 
-      <div>
+      <!--<div>
         <input type="file" id="fileInput" />
         <button onclick="lerArquivo()">Ler Arquivo</button>
         <pre id="fileContents"></pre>
       </div>
+    -->
     </main>
     <footer></footer>
 
     <script>
-      function lerArquivo() {
-        const fileInput = document.getElementById("fileInput");
-        const file = fileInput.files[0];
-
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function (event) {
-            const contents = event.target.result;
-            exibirConteudo(contents);
-          };
-          reader.readAsText(file);
-        } else {
-          alert("Por favor, selecione um arquivo.");
-        }
-      }
-
-      function exibirConteudo(contents) {
-        const fileContents = document.getElementById("fileContents");
-        fileContents.textContent = contents;
-      }
-    </script>
+        const fileInput = document.getElementById('file-input');
+        const fileContainer = document.getElementById('file-container');
+        const loadFileButton = document.getElementById('load-file');
+        const closeFileButton = document.getElementById('close-file');
+        let objectUrl = null;
+    
+        loadFileButton.addEventListener('click', async function() {
+          const file = fileInput.files[0];
+    
+          if (file) {
+            if (file.type === 'application/pdf') {
+              const fileReader = new FileReader();
+    
+              fileReader.onload = async function() {
+                const typedarray = new Uint8Array(this.result);
+                const blob = new Blob([typedarray], { type: 'application/pdf' });
+    
+                objectUrl = URL.createObjectURL(blob);
+                const iframe = document.createElement('iframe');
+                iframe.style.width = '100%';
+                iframe.style.height = '500px'; // Defina a altura conforme necessário
+    
+                fileContainer.innerHTML = ''; // Limpa qualquer conteúdo anterior
+                fileContainer.appendChild(iframe);
+    
+                iframe.src = objectUrl;
+              };
+    
+              fileReader.readAsArrayBuffer(file);
+            } else if (file.name.toLowerCase().endsWith('.cbz')) { // Verifica se a extensão do arquivo é .cbz
+              const zip = new JSZip();
+    
+              zip.loadAsync(file).then(async function(contents) {
+                const imageFiles = Object.keys(contents.files)
+                  .filter(fileName => fileName.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/))
+                  .sort(); // Ordena os arquivos de imagem
+    
+                fileContainer.innerHTML = ''; // Limpa qualquer conteúdo anterior
+    
+                for (let i = 0; i < imageFiles.length; i++) {
+                  const imageBlob = await contents.files[imageFiles[i]].async('blob');
+                  const imageUrl = URL.createObjectURL(imageBlob);
+    
+                  const img = document.createElement('img');
+                  img.src = imageUrl;
+                  fileContainer.appendChild(img);
+                }
+              });
+            }
+          }
+        });
+    
+        closeFileButton.addEventListener('click', function() {
+          if (objectUrl) {
+            URL.revokeObjectURL(objectUrl);
+            fileContainer.innerHTML = ''; // Remove o conteúdo do arquivo
+          }
+        });
+      </script>
     <script>
-        const pdfFileInput = document.getElementById('pdf-file');
+        /*const pdfFileInput = document.getElementById('pdf-file');
         const pdfContainer = document.getElementById('pdf-container');
         const loadPdfButton = document.getElementById('load-pdf');
         const closePdfButton = document.getElementById('close-pdf');
@@ -98,7 +139,7 @@
             URL.revokeObjectURL(objectUrl);
             pdfContainer.innerHTML = ''; // Remove o iframe
           }
-        });
+        });*/
       </script>
   </body>
 </html>
